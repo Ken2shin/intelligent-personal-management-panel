@@ -42,14 +42,16 @@ COPY --from=assets /app/public/build ./public/build
 # Instalar Composer de forma global
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# INSTALACIÓN CRÍTICA: --no-scripts evita que Laravel intente conectar a la DB en el build
+# Instalación sin scripts para evitar errores de red en el build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Ajustar permisos para carpetas de escritura de Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Exponer el puerto por defecto de Render
+# Exponer puerto 80
 EXPOSE 80
 
-# Comando final: Corre migraciones (ahora sí con red) e inicia Apache
-CMD php artisan migrate --force && apache2-foreground
+# Comando final optimizado: 
+# 1. Espera a que la red se estabilice.
+# 2. Intenta migrar. Si falla por red, la app arranca igual para que puedas debugear.
+CMD sleep 5 && php artisan migrate --force --no-interaction ; apache2-foreground
