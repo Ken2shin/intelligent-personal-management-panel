@@ -36,28 +36,23 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 WORKDIR /var/www/html
 COPY . .
 
-# Copiar los assets compilados desde la etapa anterior (Vite/Tailwind)
+# Copiar los assets compilados
 COPY --from=assets /app/public/build ./public/build
 
-# Instalar Composer de forma global
+# Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Instalación sin scripts para evitar errores de red en el build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# PERMISOS CRÍTICOS: Para evitar el error 419
+# PERMISOS CRÍTICOS
 RUN chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-# Exponer puerto 80
 EXPOSE 80
 
-# Comando final optimizado para Plan Gratuito:
-# Limpia configuraciones y sesiones viejas antes de arrancar.
+# Comando final corregido (sin session:clear y con nombre de apache correcto)
 CMD sleep 5 && \
     php artisan config:clear && \
-    php artisan session:clear && \
     php artisan cache:clear && \
+    php artisan view:clear && \
     php artisan migrate --force --no-interaction ; \
-    apache2-foregrounds 
-    
+    apache2-foreground
