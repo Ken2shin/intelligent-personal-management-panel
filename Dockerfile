@@ -45,14 +45,19 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Instalación sin scripts para evitar errores de red en el build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Ajustar permisos para carpetas de escritura de Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache
+# PERMISOS CRÍTICOS: Para evitar el error 419
+RUN chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
 # Exponer puerto 80
 EXPOSE 80
 
 # Comando final optimizado para Plan Gratuito:
-# 1. Espera 5 segundos para estabilidad de red.
-# 2. Limpia caché para leer las variables de Render.
-# 3. Ejecuta migraciones automáticamente.
-CMD sleep 5 && php artisan config:clear && php artisan migrate --force --no-interaction ; apache2-foreground
+# Limpia configuraciones y sesiones viejas antes de arrancar.
+CMD sleep 5 && \
+    php artisan config:clear && \
+    php artisan session:clear && \
+    php artisan cache:clear && \
+    php artisan migrate --force --no-interaction ; \
+    apache2-foregrounds 
+    
