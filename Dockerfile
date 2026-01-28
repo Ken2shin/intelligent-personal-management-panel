@@ -36,20 +36,22 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 WORKDIR /var/www/html
 COPY . .
 
-# Copiar los assets compilados
+# Copiar los assets compilados desde la etapa anterior
 COPY --from=assets /app/public/build ./public/build
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# PERMISOS CRÍTICOS
-RUN chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache
+# PERMISOS TOTALES: Esto elimina el error de "Permission denied" en los logs
+RUN chmod -R 777 storage bootstrap/cache
 
 EXPOSE 80
 
-# Comando final corregido (sin session:clear y con nombre de apache correcto)
+# Comando final optimizado:
+# 1. Espera a que la red se estabilice.
+# 2. Limpia la configuración para leer las nuevas variables (la IP).
+# 3. Corre las migraciones automáticamente.
 CMD sleep 5 && \
     php artisan config:clear && \
     php artisan cache:clear && \
