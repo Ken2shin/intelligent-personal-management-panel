@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # --- ETAPA 2: Configurar PHP/Laravel ---
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Instalar dependencias del sistema y extensiones de PHP para PostgreSQL (Supabase)
 RUN apt-get update && apt-get install -y \
