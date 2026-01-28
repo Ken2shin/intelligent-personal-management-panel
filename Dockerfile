@@ -9,13 +9,19 @@ RUN npm run build
 # --- ETAPA 2: Configurar PHP/Laravel ---
 FROM php:8.4-apache
 
-# Instalar dependencias del sistema y extensiones de PHP para PostgreSQL (Supabase)
+# Instalar dependencias del sistema y extensiones de PHP
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     zip \
     unzip \
     git \
-    && docker-php-ext-install pdo pdo_pgsql
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    && docker-php-ext-install pdo pdo_pgsql bcmath gd mbstring
+
+# Instalar y habilitar extensión de REDIS (Crucial para el error actual)
+RUN pecl install redis && docker-php-ext-enable redis
 
 # Habilitar mod_rewrite de Apache para Laravel
 RUN a2enmod rewrite
