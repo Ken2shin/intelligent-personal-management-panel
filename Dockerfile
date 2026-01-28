@@ -51,7 +51,8 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 # Exponer puerto 80
 EXPOSE 80
 
-# Comando final optimizado: 
-# 1. Espera a que la red se estabilice.
-# 2. Intenta migrar. Si falla por red, la app arranca igual para que puedas debugear.
-CMD sleep 5 && php artisan migrate --force --no-interaction ; apache2-foreground
+# Comando final optimizado para Plan Gratuito:
+# 1. Espera 5 segundos para estabilidad de red.
+# 2. Limpia caché para leer las variables de Render.
+# 3. Ejecuta migraciones automáticamente.
+CMD sleep 5 && php artisan config:clear && php artisan migrate --force --no-interaction ; apache2-foreground
