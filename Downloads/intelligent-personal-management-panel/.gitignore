@@ -1,0 +1,27 @@
+# --- DEPENDENCIAS ---
+/node_modules
+/vendor
+
+# --- CREDENCIALES Y CONFIGURACIÓN ---
+.env
+.env.backup
+.env.production
+.php_cs.cache
+/render.yaml
+
+# --- ARCHIVOS DE DOCUMENTACIÓN (IPMP) ---
+# Esto ignorará todos los archivos .md que veo en tu imagen
+/*.md
+/docs/*.md
+
+# --- ARCHIVOS DE SISTEMA Y LOGS ---
+storage/*.key
+storage/logs/*.log
+/public/storage
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
+
+# --- COMPILACIÓN ---
+/public/build
+/public/hot
