@@ -18,9 +18,10 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    && docker-php-ext-install pdo pdo_pgsql bcmath gd mbstring
+    && docker-php-ext-install pdo pdo_pgsql bcmath gd mbstring \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar y habilitar extensión de REDIS (Crucial para el error actual)
+# Instalar y habilitar extensión de REDIS
 RUN pecl install redis && docker-php-ext-enable redis
 
 # Habilitar mod_rewrite de Apache para Laravel
@@ -35,15 +36,20 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 WORKDIR /var/www/html
 COPY . .
 
-# Copiar los assets compilados desde la etapa anterior
+# Copiar los assets compilados desde la etapa anterior (Vite/Tailwind)
 COPY --from=assets /app/public/build ./public/build
 
-# Instalar Composer
+# Instalar Composer de forma global
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader
 
-# Ajustar permisos para Laravel
+# INSTALACIÓN CRÍTICA: --no-scripts evita que Laravel intente conectar a la DB en el build
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Ajustar permisos para carpetas de escritura de Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Comando para iniciar la app y correr migraciones
+# Exponer el puerto por defecto de Render
+EXPOSE 80
+
+# Comando final: Corre migraciones (ahora sí con red) e inicia Apache
 CMD php artisan migrate --force && apache2-foreground
