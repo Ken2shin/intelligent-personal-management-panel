@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Events\TareaCreated;
+use App\Events\TareaUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,6 +22,12 @@ class Tarea extends Model
 
     protected $casts = [
         'fecha_limite' => 'datetime',
+    ];
+
+    // Disparar eventos de notificación
+    protected $dispatchesEvents = [
+        'created' => TareaCreated::class,
+        'updated' => TareaUpdated::class,
     ];
 
     public function user()

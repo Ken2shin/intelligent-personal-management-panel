@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\TransactionCreated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,11 +26,17 @@ class Transaccion extends Model
         'monto',
         'fecha',
         'descripcion',
+        'moneda',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'monto' => 'decimal:2',
+    ];
+
+    // Disparar evento de notificación cuando se crea transacción
+    protected $dispatchesEvents = [
+        'created' => TransactionCreated::class,
     ];
 
     public function user()

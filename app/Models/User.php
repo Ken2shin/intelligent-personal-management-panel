@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,6 +49,11 @@ class User extends Authenticatable
     public function notas()
     {
         return $this->hasMany(Nota::class);
+    }
+
+    public function iosDevices()
+    {
+        return $this->hasMany(IosDevice::class);
     }
 
     // Métodos optimizados con caching
@@ -111,5 +117,11 @@ class User extends Authenticatable
         cache()->forget("user.{$this->id}.tareas_hoy");
         cache()->forget("user.{$this->id}.balance");
         cache()->forget("user.{$this->id}.habitos_hoy");
+    }
+
+    // Enviar notificación personalizada de reset de contraseña
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
