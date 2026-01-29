@@ -13,12 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Esto es lo más importante para Koyeb y el error de HTTPS
-        $middleware->trustProxies(at: '*');
+        // Trusted Proxies para producción (DEBE IR PRIMERO)
+        // Importante para servicios como Vercel, Heroku, Cloudflare, etc.
+        // Permite que los headers X-Forwarded-* sean confiables desde cualquier proxy
+        $middleware->trustProxies(at: ['*']);
 
+        // Registrar middlewares de seguridad y optimización en orden correcto
         $middleware->web(append: [
-            ForceHttps::class,
-            OptimizeProduction::class,
+            ForceHttps::class,              // Forzar HTTPS (debe ir antes de OptimizeProduction)
+            OptimizeProduction::class,      // Headers de seguridad y optimización
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
