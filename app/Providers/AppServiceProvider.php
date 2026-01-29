@@ -5,8 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\CarbonImmutable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,37 +23,45 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
-     * Blindaje de seguridad y optimización de alto tráfico.
+     * Configuración de Seguridad Militar y Optimización.
      */
     public function boot(): void
     {
-        // 1. SEGURIDAD DE TRANSPORTE (Anti-Man-in-the-Middle)
-        // Fuerza a que TODA la comunicación sea encriptada (HTTPS) en producción.
-        // Esto arregla tu error de "Sitio no seguro" y protege los datos en tránsito.
+        // 1. SEGURIDAD DE TRANSPORTE (HTTPS Forzado)
+        // Evita el robo de cookies y datos en redes públicas.
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
 
-        // 2. ESTABILIDAD DE BASE DE DATOS (Anti-DoS y Errores de Migración)
-        // Limita la longitud de los índices de cadenas. Esto previene errores en
-        // bases de datos antiguas y optimiza el tamaño de los índices para búsquedas más rápidas.
+        // 2. ESTABILIDAD DE FECHAS (Anti-Bugs Lógicos)
+        // Usar fechas inmutables previene que las fechas cambien por error
+        // al hacer cálculos (ej: sumar días), lo cual es vital en reportes financieros.
+        Date::use(CarbonImmutable::class);
+
+        // 3. SEGURIDAD OPERATIVA DE BASE DE DATOS (Anti-Borrado Accidental)
+        // Impide ejecutar comandos como 'migrate:fresh' o 'db:wipe' en Producción.
+        // Esto te salva de borrar la base de datos de tus usuarios por error.
+        DB::prohibitDestructiveCommands($this->app->isProduction());
+
+        // 4. COMPATIBILIDAD DE BASE DE DATOS
+        // Previene errores de índice en MySQL/MariaDB antiguos o limitados.
         Schema::defaultStringLength(191);
 
-        // 3. POLÍTICA DE CONTRASEÑAS GLOBAL (Anti-Fuerza Bruta)
-        // Define que cualquier contraseña nueva en el sistema DEBE ser compleja.
-        // En producción exige: Mínimo 8 caracteres, letras, números y símbolos.
+        // 5. POLÍTICA DE CONTRASEÑAS BLINDADA (NIST Standard)
         Password::defaults(function () {
             $rule = Password::min(8);
 
             return $this->app->isProduction()
-                ? $rule->mixedCase()->numbers()->symbols() // Producción: Máxima seguridad
-                : $rule; // Desarrollo: Solo longitud mínima para ir rápido
+                ? $rule->mixedCase()
+                       ->numbers()
+                       ->symbols()
+                       ->uncompromised() // <--- NUEVO: Rechaza contraseñas filtradas en hackeos reales.
+                : $rule;
         });
 
-        // 4. RENDIMIENTO Y SEGURIDAD DE MODELOS (Anti-N+1 Queries)
-        // "Strict Mode" te avisa en desarrollo si estás programando mal (haciendo consultas lentas).
-        // En producción se desactiva automáticamente para no romper la app si hay un error leve,
-        // garantizando que el tráfico alto fluya sin interrupciones.
+        // 6. RENDIMIENTO Y CALIDAD DE CÓDIGO (Strict Mode)
+        // En desarrollo: Te avisa si haces consultas lentas (N+1) o asignaciones inseguras.
+        // En producción: Se desactiva para garantizar que la web nunca se caiga por una advertencia.
         Model::shouldBeStrict(! $this->app->isProduction());
     }
 }
