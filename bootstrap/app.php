@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\OptimizeProduction;
+use App\Http\Middleware\ForceHttps;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,11 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // CORREGIDO: Se eliminó \Livewire\Livewire::class de aquí.
-        // Livewire 3 ya se carga automáticamente, no necesitas agregarlo manualmente.
+        // Trusted Proxies para producción (DEBE IR PRIMERO)
+        // Importante para servicios como Vercel, Heroku, Cloudflare, etc.
+        // Permite que los headers X-Forwarded-* sean confiables desde cualquier proxy
+        $middleware->trustProxies(at: ['*']);
+
+        // Registrar middlewares de seguridad y optimización en orden correcto
         $middleware->web(append: [
-            // Aquí puedes poner otros middlewares si los necesitas en el futuro,
-            // pero por ahora déjalo vacío o con los que realmente uses.
+            ForceHttps::class,              // Forzar HTTPS (debe ir antes de OptimizeProduction)
+            OptimizeProduction::class,      // Headers de seguridad y optimización
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

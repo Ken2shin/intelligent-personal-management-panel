@@ -19,15 +19,22 @@ class OptimizeProduction
     {
         $response = $next($request);
 
-        // Agregar headers de seguridad
+        // ============================================================
+        // 1. HEADERS DE SEGURIDAD HTTPS/TLS (HSTS)
+        // ============================================================
+        // Strict-Transport-Security obliga al navegador a usar HTTPS siempre
+        $response->header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+        
+        // Otros headers de seguridad críticos
         $response->header('X-Content-Type-Options', 'nosniff');
         $response->header('X-Frame-Options', 'DENY');
         $response->header('X-XSS-Protection', '1; mode=block');
-        $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // Compression (si no está comprimido)
+        // ============================================================
+        // 2. COMPRESSION (Mejora rendimiento y velocidad)
+        // ============================================================
         if (
             function_exists('gzencode') &&
             strlen($response->getContent()) > 1024 &&
@@ -37,10 +44,14 @@ class OptimizeProduction
             $response->setContent(gzencode($response->getContent(), 9));
         }
 
-        // Cache headers para recursos estáticos
+        // ============================================================
+        // 3. CACHE HEADERS (Optimización de rendimiento)
+        // ============================================================
         if ($this->isStaticAsset($request->path())) {
+            // Recursos estáticos: cachear por 1 año
             $response->header('Cache-Control', 'public, max-age=31536000, immutable');
         } else {
+            // Contenido dinámico: no cachear
             $response->header('Cache-Control', 'private, max-age=0, must-revalidate');
         }
 

@@ -30,7 +30,11 @@ class AppServiceProvider extends ServiceProvider
         // 1. SEGURIDAD DE TRANSPORTE (HTTPS Forzado)
         // Evita el robo de cookies y datos en redes públicas.
         if ($this->app->environment('production')) {
+            // Forzar HTTPS en producción
             URL::forceScheme('https');
+            
+            // Configurar URLs confiables para que el proxy HTTP forwarding funcione
+            URL::forceRootUrl(env('APP_URL', 'https://localhost'));
         }
 
         // 2. ESTABILIDAD DE FECHAS (Anti-Bugs Lógicos)
@@ -55,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
                 ? $rule->mixedCase()
                        ->numbers()
                        ->symbols()
-                       ->uncompromised() // <--- NUEVO: Rechaza contraseñas filtradas en hackeos reales.
+                       ->uncompromised() // <--- Rechaza contraseñas filtradas en hackeos reales.
                 : $rule;
         });
 
